@@ -50,6 +50,7 @@ def detect_faces(frame):
     # find largest face
     largest_area = 0
     face_coord = [0,0]
+    start = time.time()
             
     if len(detected_faces) != 0:
                 
@@ -75,7 +76,7 @@ def detect_faces(frame):
 
 ################# Motor Control #################
 
-def update_motor_pid(motor,GpioPins,step_time,Kp,Ki,Kd,error,sum_error,d_error, start):
+def update_motor_pid(motor,GpioPins,step_time,Kp,Ki,Kd,error,sum_error,d_error, last_error,start):
 
     #speed gain calculated from PID gain values
     speed = Kp * error + Ki * sum_error + Kd * d_error
@@ -109,20 +110,25 @@ def update_motor_pid(motor,GpioPins,step_time,Kp,Ki,Kd,error,sum_error,d_error, 
 ################# Main Loop for Live Streaming #################
 
 def gen_frames():
+    sum_error = 0
+    d_error = 0
+    error = 0
+    last_error = 0
+    start = time.time()
     while True:
         success, frame = camera.read()
         
+
         if not success:
             break
         else:
+            cv2.normalize(frame, frame, 50, 255, cv2.NORM_MINMAX)
+            error, start, frame = detect_faces(frame)
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
 
-            # Face detection to give error value
-            error, start, frame = detect_faces(frame)
-
             # PID control of motor
-            sum_error, d_error, last_error = update_motor_pid(mymotor,GpioPins,step_time,Kp,Ki,Kd,error,sum_error,d_error, start)
+            sum_error, d_error, last_error = update_motor_pid(mymotor,GpioPins,step_time,Kp,Ki,Kd,error,sum_error,d_error,last_error, start)
 
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
@@ -136,5 +142,5 @@ def video_feed():
     return StreamingResponse(gen_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
-    uvicorn.run(app, host='127.0.0.1', port=8000)
+    uvicorn.run(app, host='0.0.0.0', port=8000)
     GPIO.cleanup()
