@@ -1,0 +1,5 @@
+fastapi==0.95.0
+numpy==1.23.4
+opencv_python==4.6.0.66
+RpiMotorLib==3.2
+uvicorn==0.21.1
