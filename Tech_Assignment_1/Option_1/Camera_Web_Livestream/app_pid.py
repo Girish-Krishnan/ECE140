@@ -60,7 +60,7 @@ def detect_faces(frame):
                     largest_area = width*height
                 
             for (x,y,width,height) in detected_faces:
-                cv2.rectangle(frame,(x,y),(x + width, y + height),(0, 0, 255),2)
+                cv2.rectangle(frame,(x,y),(x + width, y + height),(0, 255, 0),2)
                 if width*height == largest_area:
                     face_coord = [x+ width//2, y + height//2]
 
@@ -69,8 +69,10 @@ def detect_faces(frame):
     # Draw a vertical line down the center of the frame
     cv2.line(frame, (frame.shape[1] // 2, 0), (frame.shape[1] // 2, frame.shape[0]), (0, 255, 0), 2)
 
-    # Draw an error line showing the deviation from center along x axis
-    cv2.line(frame, (frame.shape[1] // 2, frame.shape[0] // 2), (frame.shape[1] // 2 + error, frame.shape[0] // 2), (0, 0, 255), 2)
+    # Draw an error line, from the center of the frame to the center of the face, with a red dot at the center of the face
+    cv2.line(frame, (frame.shape[1] // 2, frame.shape[0] // 2), (face_coord[0], face_coord[1]), (255, 0, 0), 2)
+    cv2.circle(frame, (face_coord[0], face_coord[1]), 2, (0, 0, 255), 2)
+
 
     return error, start, frame
 
